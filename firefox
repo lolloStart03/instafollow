@@ -1,5 +1,5 @@
-#Questo codice apre la pagina di instagram, accetta i cookie necessari, effettua il login, apre la pagina dei followers della pagina target, 
-#segue i primi n profili, ed infine stampa i loro nomi utenti
+# Questo codice apre la pagina di instagram, accetta i cookie necessari, effettua il login, apre la pagina dei followers della pagina target, 
+# segue i primi n profili, ed infine stampa i loro nomi utenti
 
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -15,10 +15,12 @@ driver = webdriver.Firefox()
 driver.get("https://www.instagram.com/")
 
 # attendiamo 5 secondi per caricare la pagina
-time.sleep(5)
+wait = WebDriverWait(driver, 10)
+# Attendi che l'elemento di input sia presente
+input_element = wait.until(EC.presence_of_element_located((By.XPATH, f'//button[text()="Consenti tutti i cookie"]')))
 
 # aspettiamo che la barra dei cookie sia caricata
-accept_cookie_button_xpath = '//button[text()="Consenti solo i cookie essenziali"]'
+accept_cookie_button_xpath = '//button[text()="Consenti tutti i cookie"]'
 try:
     accept_cookie_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, accept_cookie_button_xpath)))
     accept_cookie_button.click()
@@ -45,14 +47,17 @@ login_button = driver.find_element(By.XPATH, login_button_xpath)
 login_button.click()
 
 # attendiamo 5 secondi per caricare la pagina del profilo
-time.sleep(5)
+time.sleep(10)
 
 # fine login
+k=0
 while True:
     # Vai alla pagina del profilo di "promed_official"
     driver.get("https://www.instagram.com/studenti.bocconi/followers/")
 
-    time.sleep(9)
+    wait = WebDriverWait(driver, 10)
+     # Attendi che l'elemento di input sia presente
+    input_element = wait.until(EC.presence_of_element_located((By.XPATH, f'/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/div[1]/div/div[1]/div/div')))
 
     # Segui i primi n follower
     num_followers_to_follow = 7
@@ -73,4 +78,7 @@ while True:
         else:
             print("Already following this user")
 
+    print("ciclo {k} completato")
+    k = k+1
     time.sleep(60*60)
+    time.sleep(random.uniform(10, 400))    
