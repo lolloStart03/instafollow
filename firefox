@@ -1,62 +1,113 @@
 # Questo codice apre la pagina di instagram, accetta i cookie necessari, effettua il login, apre la pagina dei followers della pagina target, 
 # segue i primi n profili, ed infine stampa i loro nomi utenti
 
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium import webdriver
 import time
 import random
+import pickle
 
-# apriamo il browser Firefox
-driver = webdriver.Firefox()
+def salva_cookie(driver, cookie_file):
+    cookies = driver.get_cookies()
+    with open(cookie_file, 'wb') as file:
+        pickle.dump(cookies, file)
 
-# apriamo la pagina di Instagram
-driver.get("https://www.instagram.com/")
+def carica_cookie(driver, cookie_file):
+    with open(cookie_file, 'rb') as file:
+        cookies = pickle.load(file)
+    for cookie in cookies:
+        driver.add_cookie(cookie)
 
-# attendiamo 5 secondi per caricare la pagina
-wait = WebDriverWait(driver, 10)
-# Attendi che l'elemento di input sia presente
-input_element = wait.until(EC.presence_of_element_located((By.XPATH, f'//button[text()="Consenti tutti i cookie"]')))
+nomeUtente = "Seaisblue55"
+passwordAccesso = "Seeisblue"
 
-# aspettiamo che la barra dei cookie sia caricata
-accept_cookie_button_xpath = '//button[text()="Consenti tutti i cookie"]'
-try:
-    accept_cookie_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, accept_cookie_button_xpath)))
-    accept_cookie_button.click()
-except:
-    pass
-
-time.sleep(1)
-
-# inseriamo il nome utente
-username_xpath = '//*[@id="loginForm"]/div/div[1]/div/label/input'
-username = driver.find_element(By.XPATH, username_xpath)
-username.send_keys("Seaisblue55")
-
-# inseriamo la password
-password_xpath = '//*[@id="loginForm"]/div/div[2]/div/label/input'
-password = driver.find_element(By.XPATH, password_xpath)
-password.send_keys("Seeisblue")
-
-time.sleep(0.5)
-
-# premiamo il pulsante "Login"
-login_button_xpath = '//*[@id="loginForm"]/div/div[3]/button'
-login_button = driver.find_element(By.XPATH, login_button_xpath)
-login_button.click()
-
-# attendiamo 5 secondi per caricare la pagina del profilo
-time.sleep(10)
-
-# fine login
 k=0
+cookie_file = f'C:\\Users\\Admin\\Desktop\\Python\\instagram cookies\\{nomeUtente}.pkl'
+
 while True:
+    # Set Firefox to run in headless mode
+    options = Options()
+    options.add_argument('-headless')
+
+    # apriamo il browser Firefox
+    driver = webdriver.Firefox(options=options) #se si vuole headless browser
+
+    # apriamo la pagina di Instagram
+    driver.get("https://www.instagram.com/")
+
+    # Carica i cookie (se esistono)
+    try:
+        carica_cookie(driver, cookie_file)
+        driver.refresh()
+    except FileNotFoundError:
+        pass
+
+    time.sleep(7)  # Attendi che la pagina sia completamente caricata
+
+
+    try:    
+        # Attendi che l'elemento di input sia presente
+        input_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'//button[text()="Consenti tutti i cookie"]')))
+
+        # aspettiamo che la barra dei cookie sia caricata
+        accept_cookie_button_xpath = '//button[text()="Consenti tutti i cookie"]'
+        try:
+            accept_cookie_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, accept_cookie_button_xpath)))
+            accept_cookie_button.click()
+        except:
+            pass
+
+        time.sleep(1.5)
+
+        # inseriamo il nome utente
+        username_xpath = '//*[@id="loginForm"]/div/div[1]/div/label/input'
+        username = driver.find_element(By.XPATH, username_xpath)
+        username.send_keys(nomeUtente)
+
+        # inseriamo la password
+        password_xpath = '//*[@id="loginForm"]/div/div[2]/div/label/input'
+        password = driver.find_element(By.XPATH, password_xpath)
+        password.send_keys(passwordAccesso)
+
+        time.sleep(0.5)
+
+        # premiamo il pulsante "Login"
+        login_button_xpath = '//*[@id="loginForm"]/div/div[3]/button'
+        try:
+            login_button = driver.find_element(By.XPATH, login_button_xpath)
+            login_button.click()
+        
+        except NoSuchElementException:
+            login_button2 = driver.find_element(By.XPATH, "/html/body/div[2]/div/div/div[1]/div/div/div/div[1]/section/main/article/div[2]/div[1]/div[2]/form/div/div[4]/button")
+            login_button2.click()
+
+        time.sleep(5)
+        
+        # Imposta a il salvataggio dei dati nel browser
+        save_option_button_xpath = "/html/body/div[2]/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/main/div/div/div/section/div/button"
+        save_option_button = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.XPATH, save_option_button_xpath)))
+        save_option_button.click()
+        print("Login Effettuato")
+
+        # Salva i cookie
+        salva_cookie(driver, cookie_file)
+
+    except (TimeoutException):
+        # Se l'elemento non viene trovato, significa che il login è già stato effettuato
+        pass
+
+    input_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f'/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[1]')))
+    # fine login
+
     # Vai alla pagina del profilo di "promed_official"
     driver.get("https://www.instagram.com/studenti.bocconi/followers/")
 
     wait = WebDriverWait(driver, 10)
-     # Attendi che l'elemento di input sia presente
+    # Attendi che l'elemento di input sia presente
     input_element = wait.until(EC.presence_of_element_located((By.XPATH, f'/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/div[1]/div/div[1]/div/div')))
 
     # Segui i primi n follower
@@ -64,7 +115,7 @@ while True:
     for i in range(num_followers_to_follow):
         follower_xpath = f'/html/body/div[2]/div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[2]/div[1]/div/div[{i+1}]/div/div'
         follower = driver.find_element(By.XPATH, follower_xpath)
-        
+            
         follow_button = follower.find_element(By.TAG_NAME, "button")
         if follow_button.text in ["Segui", "Follow", "segui", "follow"]:
             follow_button.click()
@@ -78,7 +129,8 @@ while True:
         else:
             print("Already following this user")
 
-    print("ciclo {k} completato")
+    print(f"ciclo {k} completato")   
+    driver.quit()
     k = k+1
     time.sleep(60*60)
     time.sleep(random.uniform(10, 400))    
